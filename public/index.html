@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Playgrader">
+<meta name="theme-color" content="#FFF9E8">
+<meta name="description" content="Playgrader - Is it good for your kids? Snap a photo and find out instantly.">
+<link rel="manifest" href="/manifest.json">
+<title>Playgrader — Is it good for your kids?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { 
+  height: 100%; font-family: 'Nunito', sans-serif; background: #FFF9E8;
+  -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
+}
+body { overflow-x: hidden; }
+.app {
+  max-width: 430px; margin: 0 auto; min-height: 100vh; min-height: 100dvh;
+  background: linear-gradient(180deg, #FFF9E8 0%, #FFFFFF 40%); position: relative;
+}
+.home-header { padding: 48px 24px 16px; text-align: center; }
+.logo { display: flex; align-items: baseline; justify-content: center; margin-bottom: 12px; }
+.logo-play { font-family: 'Fredoka', sans-serif; font-size: 52px; font-weight: 700; color: #333; line-height: 1; }
+.logo-a { font-family: 'Fredoka', sans-serif; font-size: 64px; font-weight: 800; color: #D32F2F; line-height: 1; display: inline-block; transform: rotate(-8deg); text-decoration: underline; text-decoration-color: #D32F2F; text-underline-offset: -4px; }
+.logo-grade { font-family: 'Fredoka', sans-serif; font-size: 52px; font-weight: 700; color: #333; line-height: 1; margin-left: -4px; }
+.tagline { font-size: 16px; color: #666; line-height: 1.5; max-width: 300px; margin: 0 auto; }
+.beta-badge { display: inline-block; background: #FFC107; color: #333; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 12px; font-family: 'Fredoka', sans-serif; letter-spacing: 0.5px; }
+.capture-section { display: flex; flex-direction: column; align-items: center; padding: 8px 24px 24px; gap: 16px; }
+.capture-circle { width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, #FFE082, #FFD54F, #FFC107); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(255,193,7,0.3), 0 0 0 6px rgba(255,193,7,0.15); }
+.camera-btn { width: 124px; height: 124px; border-radius: 50%; border: 3px dashed rgba(255,255,255,0.7); background: rgba(255,255,255,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 2px; transition: all 0.2s; }
+.camera-btn:active { transform: scale(0.95); }
+.camera-btn .icon { font-size: 48px; }
+.camera-btn .label { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 16px; color: #333; }
+.upload-btn { background: white; border: 2px solid #E8E0D0; border-radius: 12px; padding: 14px 24px; font-size: 15px; font-weight: 600; color: #555; cursor: pointer; font-family: 'Nunito', sans-serif; width: 100%; max-width: 260px; transition: all 0.15s; }
+.upload-btn:active { transform: scale(0.97); background: #FAFAFA; }
+.error-banner { margin: 0 24px 12px; padding: 12px 16px; background: #FFF3E0; border-radius: 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; font-size: 13px; color: #E65100; border: 1px solid #FFE0B2; word-break: break-word; }
+.error-close { background: none; border: none; font-size: 16px; color: #E65100; cursor: pointer; padding: 4px 8px; flex-shrink: 0; }
+.how-section { padding: 8px 24px 24px; }
+.section-title { font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 600; color: #333; margin-bottom: 16px; }
+.steps { display: flex; gap: 12px; }
+.step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; background: white; border-radius: 16px; padding: 16px 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid #F0EBE0; }
+.step .step-icon { font-size: 32px; }
+.step .step-title { font-family: 'Fredoka', sans-serif; font-size: 15px; color: #333; font-weight: 600; }
+.step .step-desc { font-size: 13px; color: #666; text-align: center; line-height: 1.3; }
+.history-section { padding: 8px 24px 24px; }
+.history-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: white; border-radius: 14px; margin-bottom: 8px; border: 1px solid #F0EBE0; box-shadow: 0 2px 8px rgba(0,0,0,0.03); cursor: pointer; width: 100%; text-align: left; transition: all 0.15s; }
+.history-item:active { transform: scale(0.98); }
+.history-name { font-weight: 700; font-size: 15px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-meta { font-size: 12px; color: #888; }
+.footer { text-align: center; padding: 24px; }
+.footer-text { font-size: 11px; color: #aaa; }
+.footer-feedback { display: inline-block; margin-top: 8px; font-size: 13px; color: #D32F2F; font-weight: 600; text-decoration: none; background: #FFF3F3; padding: 8px 16px; border-radius: 20px; border: 1px solid #FFCDD2; }
+.analyzing-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; min-height: 100dvh; padding: 24px; }
+.preview-wrap { width: 200px; height: 200px; border-radius: 20px; overflow: hidden; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.1); margin-bottom: 24px; }
+.preview-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.scan-overlay { position: absolute; inset: 0; background: rgba(255,193,7,0.08); border-radius: 20px; }
+.scan-line { position: absolute; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, #FFC107, transparent); animation: scan 2s ease-in-out infinite; box-shadow: 0 0 12px rgba(255,193,7,0.5); }
+.loading-pulse { position: relative; display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; }
+.pulse-ring { position: absolute; inset: -10px; border-radius: 50%; border: 3px solid #FFC107; animation: pulse 1.5s ease-in-out infinite; }
+.loading-text { font-family: 'Fredoka', sans-serif; font-size: 20px; font-weight: 600; color: #333; margin-top: 24px; }
+.progress-bar { width: 200px; height: 6px; background: #EEE; border-radius: 3px; overflow: hidden; margin-top: 16px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #FFC107, #FF9800); border-radius: 3px; animation: progress 12s ease-out forwards; }
+.result-header { padding: 16px 24px 0; }
+.back-btn { background: none; border: none; font-size: 16px; font-weight: 700; color: #666; cursor: pointer; font-family: 'Nunito', sans-serif; padding: 8px 0; }
+.result-top { display: flex; align-items: center; gap: 16px; padding: 16px 24px; animation: fadeIn 0.4s ease-out; }
+.result-thumb { width: 72px; height: 72px; border-radius: 14px; object-fit: cover; border: 2px solid #F0EBE0; flex-shrink: 0; }
+.item-type { font-size: 12px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 1px; }
+.item-name { font-family: 'Fredoka', sans-serif; font-size: 24px; font-weight: 700; color: #222; margin: 4px 0 0; line-height: 1.2; }
+.grade-card { padding: 0 24px 16px; animation: fadeIn 0.5s ease-out 0.1s both; }
+.grade-card-inner { background: white; border-radius: 24px; padding: 28px 24px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 2px solid #eee; }
+.grade-circle { width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.grade-circle-inner { width: 108px; height: 108px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; }
+.grade-letter { font-size: 54px; font-weight: 800; font-family: 'Fredoka', sans-serif; line-height: 1; }
+.grade-label { font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700; margin-top: 12px; text-align: center; }
+.grade-summary { font-size: 14px; color: #555; line-height: 1.5; margin-top: 8px; text-align: center; }
+.categories-section { padding: 0 24px 16px; animation: fadeIn 0.5s ease-out 0.2s both; }
+.category-row { display: flex; gap: 12px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid #F5F0E8; }
+.cat-icon { font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
+.cat-info { flex: 1; }
+.cat-header { display: flex; justify-content: space-between; align-items: center; }
+.cat-name { font-weight: 700; font-size: 14px; color: #333; }
+.cat-note { font-size: 13px; color: #666; margin: 4px 0 0; line-height: 1.4; }
+.mini-grade { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; color: white; font-weight: 700; font-size: 11px; font-family: 'Fredoka', sans-serif; flex-shrink: 0; }
+.mini-grade-lg { width: 36px; height: 36px; font-size: 14px; }
+.tip-card { margin: 0 24px 16px; padding: 16px; background: #FFF8E1; border-radius: 16px; display: flex; gap: 12px; align-items: flex-start; border: 1px solid #FFE082; animation: fadeIn 0.5s ease-out 0.3s both; }
+.tip-title { font-family: 'Fredoka', sans-serif; font-size: 14px; color: #6B4E1B; font-weight: 600; }
+.tip-text { font-size: 13px; color: #7A6230; margin: 4px 0 0; line-height: 1.4; }
+.sources-note { margin: 0 24px 16px; padding: 12px 16px; background: #F8F6F2; border-radius: 12px; display: flex; gap: 8px; align-items: center; animation: fadeIn 0.5s ease-out 0.35s both; }
+.sources-text { font-size: 12px; color: #888; font-style: italic; }
+.scan-again-btn { display: block; width: calc(100% - 48px); margin: 8px 24px 40px; padding: 16px; background: linear-gradient(135deg, #FFC107, #FF9800); border: none; border-radius: 16px; font-size: 17px; font-weight: 700; color: white; cursor: pointer; font-family: 'Fredoka', sans-serif; box-shadow: 0 4px 16px rgba(255,152,0,0.3); animation: fadeIn 0.5s ease-out 0.4s both; transition: all 0.15s; }
+.scan-again-btn:active { transform: scale(0.97); }
+.hidden { display: none; }
+@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.5); opacity: 0; } }
+@keyframes scan { 0% { top: 0; } 50% { top: calc(100% - 3px); } 100% { top: 0; } }
+@keyframes progress { 0% { width: 0%; } 20% { width: 20%; } 50% { width: 50%; } 80% { width: 75%; } 95% { width: 88%; } 100% { width: 100%; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- HOME SCREEN -->
+  <div id="screen-home">
+    <div class="home-header">
+      <div class="beta-badge">BETA</div>
+      <div class="logo">
+        <span class="logo-play">pla</span>
+        <span class="logo-a">A</span>
+        <span class="logo-grade">grader</span>
+      </div>
+      <p class="tagline">Is it good for your kids? Snap a photo and find out instantly.</p>
+    </div>
+    <div id="error-banner" class="error-banner hidden">
+      <span id="error-text"></span>
+      <button class="error-close" onclick="clearError()">&#x2715;</button>
+    </div>
+    <div class="capture-section">
+      <div class="capture-circle">
+        <button class="camera-btn" onclick="document.getElementById('camera-input').click()">
+          <span class="icon">&#x1F4F8;</span>
+          <span class="label">Take Photo</span>
+        </button>
+      </div>
+      <button class="upload-btn" onclick="document.getElementById('file-input').click()">&#x1F4C1; Upload from Library</button>
+    </div>
+    <input id="camera-input" class="hidden" type="file" accept="image/*" capture="environment" onchange="handleFile(event)">
+    <input id="file-input" class="hidden" type="file" accept="image/*" onchange="handleFile(event)">
+    <div class="how-section">
+      <h3 class="section-title">How It Works</h3>
+      <div class="steps">
+        <div class="step"><span class="step-icon">&#x1F4F1;</span><strong class="step-title">Snap It</strong><span class="step-desc">Take a pic of the show, book, toy, or snack</span></div>
+        <div class="step"><span class="step-icon">&#x1F916;</span><strong class="step-title">Grade It</strong><span class="step-desc">AI checks trusted sources & gives a letter grade</span></div>
+        <div class="step"><span class="step-icon">&#x2705;</span><strong class="step-title">Decide</strong><span class="step-desc">Make confident choices for your little ones</span></div>
+      </div>
+    </div>
+    <div id="history-section" class="history-section hidden">
+      <h3 class="section-title">Recent Scans</h3>
+      <div id="history-list"></div>
+    </div>
+    <div class="footer">
+      <span class="footer-text">Playgrader Beta v1.0 &middot; Built for parents of kids ages 2&ndash;5</span><br>
+      <a class="footer-feedback" href="https://forms.gle/REPLACE_WITH_YOUR_FORM" target="_blank">&#x1F4AC; Give Feedback</a>
+    </div>
+  </div>
+
+  <!-- ANALYZING SCREEN -->
+  <div id="screen-analyzing" class="hidden">
+    <div class="analyzing-wrap">
+      <div class="preview-wrap"><img id="preview-img" src="" alt="Scanning"><div class="scan-overlay"><div class="scan-line"></div></div></div>
+      <div class="loading-pulse"><div class="pulse-ring"></div><span style="font-size:40px">&#x1F50D;</span></div>
+      <p class="loading-text" id="loading-text">Identifying what this is...</p>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="screen-result" class="hidden">
+    <div class="result-header"><button class="back-btn" onclick="goHome()">&#x2190; Back</button></div>
+    <div class="result-top">
+      <img id="result-thumb" class="result-thumb" src="" alt="">
+      <div><span class="item-type" id="result-type"></span><h2 class="item-name" id="result-name"></h2></div>
+    </div>
+    <div class="grade-card">
+      <div class="grade-card-inner" id="grade-card-inner">
+        <div class="grade-circle" id="grade-circle"><div class="grade-circle-inner"><span class="grade-letter" id="grade-letter"></span></div></div>
+        <div class="grade-label" id="grade-label"></div>
+        <p class="grade-summary" id="grade-summary"></p>
+      </div>
+    </div>
+    <div class="categories-section">
+      <h3 class="section-title">Breakdown</h3>
+      <div id="categories-list"></div>
+    </div>
+    <div id="tip-card" class="tip-card hidden"><span style="font-size:20px">&#x1F4A1;</span><div><div class="tip-title">Parent Tip</div><p class="tip-text" id="tip-text"></p></div></div>
+    <div id="sources-note" class="sources-note hidden"><span style="font-size:14px">&#x1F4D6;</span><span class="sources-text" id="sources-text"></span></div>
+    <button class="scan-again-btn" onclick="goHome()">&#x1F4F8; Scan Something Else</button>
+  </div>
+</div>
+
+<script>
+const GRADE_COLORS={"A+":"#1B8A2D",A:"#2EAD44","A-":"#4BBF5E","B+":"#7BC142",B:"#A4C639","B-":"#C5D631","C+":"#E8C820",C:"#F5A623","C-":"#F08C19","D+":"#E8651A",D:"#D94B2A","D-":"#C43532",F:"#B71C1C"};
+const GRADE_LABELS={"A+":"Excellent!",A:"Great Choice!","A-":"Very Good","B+":"Good Pick",B:"Solid","B-":"Pretty Good","C+":"It's Okay",C:"Meh","C-":"Could Be Better","D+":"Not Great",D:"Concerning","D-":"Think Twice",F:"Hard No"};
+const CAT_ICONS={"Age Appropriateness":"\u{1F3AF}","Educational Value":"\u{1F4DA}","Health & Safety":"\u{1F6E1}\uFE0F","Screen Quality":"\u{1F4FA}","Nutrition":"\u{1F957}","Fun Factor":"\u{1F389}","Creativity":"\u{1F3A8}","Values & Messaging":"\u{1F4AC}"};
+const LOADING_MSGS=["Identifying what this is...","Checking trusted sources...","Evaluating age-appropriateness...","Crunching the grade...","Almost ready..."];
+
+let history=[], loadingInterval=null, currentImage=null;
+
+function showScreen(n){
+  document.getElementById('screen-home').classList.toggle('hidden',n!=='home');
+  document.getElementById('screen-analyzing').classList.toggle('hidden',n!=='analyzing');
+  document.getElementById('screen-result').classList.toggle('hidden',n!=='result');
+  if(n==='analyzing')startLoading(); else stopLoading();
+  window.scrollTo(0,0);
+}
+function startLoading(){
+  let i=0;document.getElementById('loading-text').textContent=LOADING_MSGS[0];
+  const pf=document.getElementById('progress-fill');pf.style.animation='none';pf.offsetHeight;pf.style.animation='progress 12s ease-out forwards';
+  loadingInterval=setInterval(()=>{i=Math.min(i+1,LOADING_MSGS.length-1);document.getElementById('loading-text').textContent=LOADING_MSGS[i];},2200);
+}
+function stopLoading(){if(loadingInterval){clearInterval(loadingInterval);loadingInterval=null;}}
+function showError(m){document.getElementById('error-text').textContent='\u26A0\uFE0F '+m;document.getElementById('error-banner').classList.remove('hidden');}
+function clearError(){document.getElementById('error-banner').classList.add('hidden');}
+function goHome(){showScreen('home');}
+
+function compressImage(file){
+  return new Promise((resolve)=>{
+    const reader=new FileReader();
+    reader.onload=(ev)=>{
+      const orig=ev.target.result;
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const c=document.createElement('canvas');const MAX=600;
+          let w=img.width,h=img.height;
+          if(w>h){if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}}
+          else{if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}}
+          c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+          let d=c.toDataURL('image/jpeg',0.7);
+          if(!d||d==='data:,')d=c.toDataURL('image/png');
+          resolve(d);
+        }catch(e){resolve(orig);}
+      };
+      img.onerror=()=>resolve(orig);
+      img.src=orig;
+    };
+    reader.onerror=()=>resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleFile(event){
+  const file=event.target.files?.[0];if(!file)return;
+  event.target.value='';clearError();showScreen('analyzing');
+
+  try{
+    const dataUrl=await compressImage(file);
+    if(!dataUrl)throw new Error('Could not read image');
+    currentImage=dataUrl;
+    document.getElementById('preview-img').src=dataUrl;
+
+    const match=dataUrl.match(/^data:(image\/[a-zA-Z+.\-]+);base64,(.+)/s);
+    if(!match)throw new Error('Invalid image format');
+    const mediaType=match[1];
+    const base64=match[2].trim();
+
+    // Call our backend API
+    const resp=await fetch('/api/grade',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image_base64:base64,media_type:mediaType})
+    });
+
+    const result=await resp.json();
+
+    if(!resp.ok){
+      throw new Error(result.error||'Server error');
+    }
+
+    history.unshift({...result,image:dataUrl,date:new Date().toLocaleDateString()});
+    renderResult(result);
+    showScreen('result');
+
+  }catch(err){
+    console.error('Playgrader error:',err);
+    showError(err.message||'Something went wrong. Try again!');
+    showScreen('home');
+  }
+}
+
+function renderResult(r){
+  const color=GRADE_COLORS[r.overall_grade]||'#999';
+  document.getElementById('result-thumb').src=currentImage;
+  document.getElementById('result-type').textContent=r.item_type;
+  document.getElementById('result-name').textContent=r.item_name;
+  const circle=document.getElementById('grade-circle');
+  circle.style.background='conic-gradient('+color+' 0deg, '+color+'33 360deg)';
+  circle.style.boxShadow='0 8px 32px '+color+'44, 0 0 0 4px '+color+'22';
+  document.getElementById('grade-letter').textContent=r.overall_grade;
+  document.getElementById('grade-letter').style.color=color;
+  document.getElementById('grade-label').textContent=GRADE_LABELS[r.overall_grade]||'Graded';
+  document.getElementById('grade-label').style.color=color;
+  document.getElementById('grade-card-inner').style.borderColor=color+'33';
+  document.getElementById('grade-summary').textContent=r.summary;
+  const cl=document.getElementById('categories-list');cl.innerHTML='';
+  (r.categories||[]).forEach(cat=>{
+    const cc=GRADE_COLORS[cat.grade]||'#999';
+    cl.innerHTML+='<div class="category-row"><span class="cat-icon">'+(CAT_ICONS[cat.name]||'\u{1F4CB}')+'</span><div class="cat-info"><div class="cat-header"><span class="cat-name">'+cat.name+'</span><span class="mini-grade" style="background:'+cc+'">'+cat.grade+'</span></div><p class="cat-note">'+cat.note+'</p></div></div>';
+  });
+  const tc=document.getElementById('tip-card');
+  if(r.quick_tip){document.getElementById('tip-text').textContent=r.quick_tip;tc.classList.remove('hidden');}else tc.classList.add('hidden');
+  const sn=document.getElementById('sources-note');
+  if(r.sources_note){document.getElementById('sources-text').textContent=r.sources_note;sn.classList.remove('hidden');}else sn.classList.add('hidden');
+  renderHistory();
+}
+
+function renderHistory(){
+  const s=document.getElementById('history-section'),l=document.getElementById('history-list');
+  if(!history.length){s.classList.add('hidden');return;}
+  s.classList.remove('hidden');l.innerHTML='';
+  history.slice(0,5).forEach((item,i)=>{
+    const c=GRADE_COLORS[item.overall_grade]||'#999';
+    l.innerHTML+='<button class="history-item" onclick="showHistoryItem('+i+')"><span class="mini-grade mini-grade-lg" style="background:'+c+'">'+item.overall_grade+'</span><div style="flex:1;min-width:0"><div class="history-name">'+item.item_name+'</div><div class="history-meta">'+item.item_type+' &middot; '+item.date+'</div></div><span style="color:#ccc;font-size:18px">&rsaquo;</span></button>';
+  });
+}
+
+function showHistoryItem(i){
+  const item=history[i];if(!item)return;
+  currentImage=item.image;renderResult(item);showScreen('result');
+}
+</script>
+</body>
+</html>

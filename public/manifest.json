@@ -1,0 +1,10 @@
+{
+  "name": "Playgrader",
+  "short_name": "Playgrader",
+  "description": "Is it good for your kids? Snap a photo and find out.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF9E8",
+  "theme_color": "#FFC107",
+  "icons": []
+}
