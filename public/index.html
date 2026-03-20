@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Playgrader">
 <meta name="theme-color" content="#FFF9E8">
-<meta name="description" content="Playgrader - Is it good for your kids? Snap a photo and find out instantly.">
+<meta name="description" content="Playgrader - Is it good for your kids? Grade it in seconds. Get the full report card sent to you.">
 <link rel="manifest" href="/manifest.json">
 <title>Playgrader — Is it good for your kids?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -113,7 +113,7 @@ body { overflow-x: hidden; }
         <span class="logo-a">A</span>
         <span class="logo-grade">ygrader</span>
       </div>
-      <p class="tagline">Is it good for your kids? Snap a photo and find out instantly.</p>
+      <p class="tagline">Is it good for your kids? Grade it in seconds. Get the full report card sent to you.</p>
     </div>
     <div id="error-banner" class="error-banner hidden">
       <span id="error-text"></span>
@@ -311,10 +311,6 @@ function renderHistory(){
 function showHistoryItem(i){
   const item=history[i];if(!item)return;
   currentImage=item.image;renderResult(item);showScreen('result');
-}
-</script>
-</body>
-</html>
 }
 </script>
 </body>
