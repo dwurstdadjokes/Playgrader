@@ -1,12 +1,22 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/public/$1" }
+    {
+      "source": "/icons/apple-touch-icon.png",
+      "destination": "/icons/icon-192.png"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/public/$1"
+    }
   ],
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" }
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
       ]
     }
   ]

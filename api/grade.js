@@ -1,119 +1,205 @@
-export default async function handler(req, res) {
-  // CORS headers
+// Playgrader grading endpoint (Vercel serverless function).
+// Receives a base64 image, asks Claude for a structured grade via a forced tool call,
+// and returns clean JSON the frontend can render without guessing.
+
+const PRIMARY_MODEL = process.env.PLAYGRADE_MODEL || "claude-sonnet-4-5";
+const FALLBACK_MODEL = "claude-sonnet-4-20250514";
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB of base64 is plenty for a 600px photo
+
+const VALID_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"];
+
+const SYSTEM_PROMPT = `You are Playgrader, a warm and trustworthy second opinion for parents of kids ages 2 to 5.
+
+When shown a photo, identify the item (TV show, movie, book, toy, food, game, app, or other product) and grade it A+ through F for how healthy, safe, and age-appropriate it is for ages 2 to 5.
+
+Voice rules:
+- Speak parent to parent. Warm, specific, slightly funny when it fits, never preachy.
+- Grade the product, not the parent. Zero guilt trips.
+- Lead with the reason for the grade. Be concrete ("12g added sugar per serving" beats "high in sugar").
+- Acknowledge trade-offs. If it's an A, celebrate it.
+- Admit uncertainty. If you cannot identify the item confidently, say so in the summary and grade only what you can see.
+- Safety concerns (choking hazards, recalls, allergens, violent content) are stated plainly with no jokes.
+- Never use em dashes or en dashes in any text. Use commas, periods, or colons instead.
+
+Grading references: Common Sense Media, American Academy of Pediatrics screen time and toy safety guidance, WHO and USDA nutrition guidance for young children, CPSC recall knowledge.
+
+Better Alternatives: always suggest 2 or 3 real, well-known products in the same category that a parent could actually find. If the item already earns an A or A+, frame them as "also worth a look" rather than replacements. Each alternative MUST include a letter grade and a "why" field with one short, specific reason (never leave "why" empty).
+
+Categories: give 3 or 4 that fit the item type. Good picks: Age Appropriateness, Educational Value, Health & Safety, Nutrition, Screen Quality, Values & Messaging, Fun Factor, Creativity.`;
+
+const GRADE_TOOL = {
+  name: "submit_grade",
+  description: "Submit the Playgrader report card for the item in the photo.",
+  input_schema: {
+    type: "object",
+    properties: {
+      item_name: { type: "string", description: "Specific product or title name, e.g. 'Bluey (Season 1)' or 'Goldfish Cheddar Crackers'" },
+      item_type: { type: "string", enum: ["TV Show", "Movie", "Book", "Toy", "Food", "Game", "App", "Product"] },
+      confidence: { type: "string", enum: ["high", "medium", "low"], description: "How sure you are about what the item is" },
+      overall_grade: { type: "string", enum: VALID_GRADES },
+      headline: { type: "string", description: "One punchy line, max 10 words, that sums up the verdict" },
+      summary: { type: "string", description: "2 to 3 sentences explaining the grade, parent to parent" },
+      categories: {
+        type: "array",
+        minItems: 3,
+        maxItems: 4,
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            grade: { type: "string", enum: VALID_GRADES },
+            note: { type: "string", description: "One specific sentence" },
+          },
+          required: ["name", "grade", "note"],
+        },
+      },
+      quick_tip: { type: "string", description: "One actionable tip for a parent, max 30 words" },
+      alternatives: {
+        type: "array",
+        minItems: 2,
+        maxItems: 3,
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            grade: { type: "string", enum: VALID_GRADES },
+            why: { type: "string", description: "One short reason, max 15 words" },
+          },
+          required: ["name", "grade", "why"],
+        },
+      },
+      sources_note: { type: "string", description: "Short note on which guidelines informed this grade" },
+    },
+    required: ["item_name", "item_type", "confidence", "overall_grade", "headline", "summary", "categories", "quick_tip", "alternatives", "sources_note"],
+  },
+};
+
+async function callClaude(apiKey, model, mediaType, imageBase64, fetchImpl) {
+  return fetchImpl("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 1500,
+      system: SYSTEM_PROMPT,
+      tools: [GRADE_TOOL],
+      tool_choice: { type: "tool", name: "submit_grade" },
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
+            { type: "text", text: "Grade this for a child ages 2 to 5 and submit the report card." },
+          ],
+        },
+      ],
+    }),
+  });
+}
+
+function extractToolInput(data) {
+  const block = (data?.content || []).find((b) => b.type === "tool_use" && b.name === "submit_grade");
+  if (block && block.input && typeof block.input === "object") return block.input;
+  // Fallback: some responses may still come back as text JSON.
+  const text = (data?.content || []).map((b) => (b.type === "text" ? b.text : "")).join("").trim();
+  if (!text) return null;
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+  try {
+    return JSON.parse(match[0]);
+  } catch {
+    return null;
+  }
+}
+
+const DASHES = /\s*[\u2014\u2013]+\s*/g;
+function clean(v) {
+  return String(v == null ? "" : v).replace(DASHES, ", ").replace(/,\s*,/g, ",").trim();
+}
+
+function normalize(parsed) {
+  const grade = VALID_GRADES.includes(parsed.overall_grade) ? parsed.overall_grade : "C";
+  const categories = Array.isArray(parsed.categories)
+    ? parsed.categories
+        .filter((c) => c && c.name)
+        .map((c) => ({ name: clean(c.name), grade: VALID_GRADES.includes(c.grade) ? c.grade : "C", note: clean(c.note || c.reason || c.why || c.description || "") }))
+    : [];
+  const alternatives = Array.isArray(parsed.alternatives)
+    ? parsed.alternatives
+        .filter((a) => a && a.name)
+        .map((a) => ({ name: clean(a.name), grade: VALID_GRADES.includes(a.grade) ? a.grade : "B", why: clean(a.why || a.reason || a.note || a.description || "") }))
+    : [];
+  return {
+    item_name: clean(parsed.item_name) || "Unknown Item",
+    item_type: parsed.item_type || "Product",
+    confidence: parsed.confidence || "medium",
+    overall_grade: grade,
+    headline: clean(parsed.headline),
+    summary: clean(parsed.summary) || "We could not fully assess this one. Try a clearer photo?",
+    categories,
+    quick_tip: clean(parsed.quick_tip),
+    alternatives,
+    sources_note: clean(parsed.sources_note),
+    model: parsed.__model || undefined,
+  };
+}
+
+export default async function handler(req, res, deps = {}) {
+  const fetchImpl = deps.fetch || fetch;
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  
+
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { image_base64, media_type } = req.body;
+  const { image_base64, media_type } = req.body || {};
   if (!image_base64 || !media_type) {
     return res.status(400).json({ error: "Missing image data" });
   }
+  if (!/^image\/(jpeg|png|webp|gif)$/.test(media_type)) {
+    return res.status(400).json({ error: "Unsupported image type" });
+  }
+  if (image_base64.length > MAX_IMAGE_BYTES) {
+    return res.status(413).json({ error: "Image too large. Try a smaller photo." });
+  }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = deps.apiKey || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "API key not configured" });
   }
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1500,
-        system: `You are Playgrader. You grade kids' products for parents of children ages 2-5.
+    let model = PRIMARY_MODEL;
+    let response = await callClaude(apiKey, model, media_type, image_base64, fetchImpl);
 
-CRITICAL: You must respond with ONLY a JSON object. No markdown, no explanation, no text before or after. Just raw JSON.
-
-When shown a photo:
-1. Identify the item (TV show, movie, book, toy, food product, game, app, etc.)
-2. Grade it A+ through F for suitability for ages 2-5
-3. Provide 3-4 category scores relevant to the item type
-4. Give a parent-friendly summary
-
-Required JSON format:
-{"item_name":"Name","item_type":"TV Show|Movie|Book|Toy|Food|Game|App|Product","overall_grade":"B+","summary":"2-3 sentences about why this grade","categories":[{"name":"Age Appropriateness","grade":"A","note":"Brief note"},{"name":"Educational Value","grade":"B","note":"Brief note"},{"name":"Health & Safety","grade":"A-","note":"Brief note"}],"quick_tip":"One actionable tip","sources_note":"Sources that informed this grade"}
-
-Be honest but not alarmist. Use Common Sense Media, AAP, WHO, and nutritional guidelines as references. If you can identify the specific product/show, use your knowledge about it.`,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image",
-                source: {
-                  type: "base64",
-                  media_type: media_type,
-                  data: image_base64,
-                },
-              },
-              {
-                type: "text",
-                text: "Grade this for ages 2-5. Return ONLY valid JSON, nothing else.",
-              },
-            ],
-          },
-        ],
-      }),
-    });
+    // If the configured model name is not available on this account, fall back once.
+    if (response.status === 404 && model !== FALLBACK_MODEL) {
+      model = FALLBACK_MODEL;
+      response = await callClaude(apiKey, model, media_type, image_base64, fetchImpl);
+    }
 
     if (!response.ok) {
       const errText = await response.text();
       console.error("Anthropic API error:", response.status, errText);
-      return res.status(502).json({ error: "AI service error", status: response.status });
+      return res.status(502).json({ error: "The grader is taking a break. Try again in a minute.", status: response.status });
     }
 
     const data = await response.json();
-    const text = data.content?.map((b) => (b.type === "text" ? b.text : "")).join("");
-
-    if (!text) {
-      return res.status(502).json({ error: "Empty AI response" });
+    const parsed = extractToolInput(data);
+    if (!parsed) {
+      return res.status(502).json({ error: "We could not read that grade. Try a clearer photo?" });
     }
-
-    // Robust JSON extraction
-    let parsed;
-    const clean = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-
-    try {
-      parsed = JSON.parse(clean);
-    } catch (e1) {
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          const fixed = jsonMatch[0]
-            .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
-            .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
-            .replace(/,\s*}/g, "}")
-            .replace(/,\s*]/g, "]")
-            .replace(/\n/g, " ");
-          parsed = JSON.parse(fixed);
-        } catch (e2) {
-          return res.status(502).json({ error: "Could not parse AI response", raw: text.substring(0, 200) });
-        }
-      } else {
-        return res.status(502).json({ error: "No valid data in AI response", raw: text.substring(0, 200) });
-      }
-    }
-
-    // Fill defaults
-    if (!parsed.item_name) parsed.item_name = "Unknown Item";
-    if (!parsed.item_type) parsed.item_type = "Product";
-    if (!parsed.overall_grade) parsed.overall_grade = "C";
-    if (!parsed.summary) parsed.summary = "Unable to fully assess this item.";
-    if (!parsed.categories) parsed.categories = [];
-    if (!parsed.quick_tip) parsed.quick_tip = "";
-    if (!parsed.sources_note) parsed.sources_note = "";
-
-    return res.status(200).json(parsed);
+    parsed.__model = model;
+    return res.status(200).json(normalize(parsed));
   } catch (err) {
     console.error("Server error:", err);
-    return res.status(500).json({ error: "Server error: " + err.message });
+    return res.status(500).json({ error: "Something went sideways on our end. Try again?" });
   }
 }
+
+export { extractToolInput, normalize, GRADE_TOOL, VALID_GRADES };
